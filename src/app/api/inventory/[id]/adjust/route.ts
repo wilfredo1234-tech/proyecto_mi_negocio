@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { AdjustInventoryInput } from '@/src/app/modules/inventory/types/inventory.types'
 
+const round = (n: number) => Math.round(n * 1000) / 1000
 
 async function getUser(req: NextRequest, supabase: any) {
   const token = req.headers.get('Authorization')?.replace('Bearer ', '')
@@ -27,6 +28,8 @@ export async function POST(
     return NextResponse.json({ error: 'Cantidad inválida' }, { status: 400 })
   }
 
+  const quantity = round(body.quantity)
+
   const { data: inv, error: fetchError } = await supabase
     .from('inventory')
     .select('id, stock')
@@ -41,16 +44,16 @@ export async function POST(
 
   switch (body.type) {
     case 'entrada':
-      newStock = inv.stock + body.quantity
+      newStock = round(inv.stock + quantity)
       break
     case 'salida':
-      newStock = inv.stock - body.quantity
+      newStock = round(inv.stock - quantity)
       if (newStock < 0) {
         return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 })
       }
       break
     case 'correccion':
-      newStock = body.quantity
+      newStock = quantity
       break
     default:
       return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })

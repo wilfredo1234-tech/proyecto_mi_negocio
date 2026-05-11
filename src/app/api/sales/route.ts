@@ -3,6 +3,8 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 import { CreateSaleInput } from '../../modules/sales/types/sale.types'
 
 // ─── Helpers ─────────────────────────────────────────────────
+const round = (n: number) => Math.round(n * 1000) / 1000
+
 async function getUser(req: NextRequest, supabase: any) {
   const token = req.headers.get('Authorization')?.replace('Bearer ', '')
   if (!token) return null
@@ -61,16 +63,20 @@ export async function POST(req: NextRequest) {
 
     // ── Calcular totales ──────────────────────────────────────
     const saleItems = body.items.map(item => {
-      const quantity = item.input_mode === 'money'
-        ? item.total / item.sale_price
-        : item.quantity
+      const quantity = round(
+        item.input_mode === 'money'
+          ? item.total / item.sale_price
+          : item.quantity
+      )
 
-      const total = item.input_mode === 'money'
-        ? item.total
-        : item.quantity * item.sale_price
+      const total = round(
+        item.input_mode === 'money'
+          ? item.total
+          : item.quantity * item.sale_price
+      )
 
-      const cost   = quantity * item.purchase_price
-      const profit = total - cost
+      const cost   = round(quantity * item.purchase_price)
+      const profit = round(total - cost)
 
       return {
         product_id:     item.product_id,
@@ -84,9 +90,9 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    const total_sale   = saleItems.reduce((acc, i) => acc + i.total, 0)
-    const total_cost   = saleItems.reduce((acc, i) => acc + i.cost, 0)
-    const total_profit = saleItems.reduce((acc, i) => acc + i.profit, 0)
+    const total_sale   = round(saleItems.reduce((acc, i) => acc + i.total, 0))
+    const total_cost   = round(saleItems.reduce((acc, i) => acc + i.cost, 0))
+    const total_profit = round(saleItems.reduce((acc, i) => acc + i.profit, 0))
 
     // ── Crear cabecera de venta ───────────────────────────────
     const { data: sale, error: saleError } = await supabase
@@ -123,7 +129,7 @@ export async function POST(req: NextRequest) {
         if (inv) {
           await supabase
             .from('inventory')
-            .update({ stock: inv.stock - item.quantity })
+            .update({ stock: round(inv.stock - item.quantity) })
             .eq('id', inv.id)
         }
       } else {
@@ -138,28 +144,24 @@ export async function POST(req: NextRequest) {
         if (inv) {
           await supabase
             .from('inventory')
-            .update({ stock: inv.stock - item.quantity })
+            .update({ stock: round(inv.stock - item.quantity) })
             .eq('id', inv.id)
         }
       }
     }
 
-   
- 
-
-if (body.payment_method === 'credito' && body.customer_id) {
-  const { error: debtError } = await supabase.from('debts').insert({
-    company_id,
-    customer_id:    body.customer_id,
-    sale_id:        sale.id,
-    total_amount:   total_sale,
-    paid_amount:    0,
-    pending_amount: total_sale,
-    status:         'pendiente',
-  })
-
- 
-}
+    // ── Si es crédito → crear deuda automáticamente ───────────
+    if (body.payment_method === 'credito' && body.customer_id) {
+      await supabase.from('debts').insert({
+        company_id,
+        customer_id:    body.customer_id,
+        sale_id:        sale.id,
+        total_amount:   total_sale,
+        paid_amount:    0,
+        pending_amount: total_sale,
+        status:         'pendiente',
+      })
+    }
 
     return NextResponse.json(sale, { status: 201 })
 

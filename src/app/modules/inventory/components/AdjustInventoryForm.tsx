@@ -11,6 +11,10 @@ type Props = {
   loading: boolean
 }
 
+const round = (n: number) => Math.round(n * 1000) / 1000
+
+const fmtQty = (n: number) => parseFloat(n.toFixed(3)).toString()
+
 const ADJUST_TYPES: { value: AdjustType; label: string; description: string }[] = [
   { value: 'entrada',    label: 'Entrada',    description: 'Suma al stock actual' },
   { value: 'salida',     label: 'Salida',     description: 'Resta al stock actual' },
@@ -23,18 +27,18 @@ export function AdjustInventoryForm({ currentStock, unit, onSubmit, loading }: P
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const previewStock = () => {
-    const qty = Number(quantity)
+  const previewStock = (): number => {
+    const qty = round(Number(quantity))
     if (!qty) return currentStock
     switch (type) {
-      case 'entrada':    return currentStock + qty
-      case 'salida':     return currentStock - qty
+      case 'entrada':    return round(currentStock + qty)
+      case 'salida':     return round(currentStock - qty)
       case 'correccion': return qty
     }
   }
 
   const handleSubmit = async () => {
-    const qty = Number(quantity)
+    const qty = round(Number(quantity))
     if (!qty || qty <= 0) {
       setError('La cantidad debe ser mayor a 0')
       return
@@ -52,7 +56,7 @@ export function AdjustInventoryForm({ currentStock, unit, onSubmit, loading }: P
       <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
         <span className="text-xs font-medium text-gray-500">Stock actual</span>
         <span className="text-sm font-semibold text-gray-900">
-          {currentStock} {unit}
+          {fmtQty(currentStock)} {unit}
         </span>
       </div>
 
@@ -89,7 +93,7 @@ export function AdjustInventoryForm({ currentStock, unit, onSubmit, loading }: P
         <Input
           type="number"
           min={0}
-          step="0.01"
+          step="0.001"
           placeholder="0"
           value={quantity}
           onChange={e => setQuantity(e.target.value)}
@@ -103,7 +107,7 @@ export function AdjustInventoryForm({ currentStock, unit, onSubmit, loading }: P
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
           <span className="text-xs font-medium text-gray-500">Stock después del ajuste</span>
           <span className={`text-sm font-semibold ${previewStock() < 0 ? 'text-red-500' : 'text-green-600'}`}>
-            {previewStock()} {unit}
+            {fmtQty(previewStock())} {unit}
           </span>
         </div>
       )}

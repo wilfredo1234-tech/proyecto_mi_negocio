@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react'
 type Props = {
   label: string
   initialValue: number
+  mode: 'quantity' | 'money'  // ← nuevo prop
+  unit?: string                // ← nuevo prop
   onConfirm: (value: number) => void
   onClose: () => void
 }
 
-export function NumpadModal({ label, initialValue, onConfirm, onClose }: Props) {
+export function NumpadModal({ label, initialValue, mode, unit = '', onConfirm, onClose }: Props) {
   const [display, setDisplay] = useState(
     initialValue > 0 ? String(initialValue) : ''
   )
@@ -44,15 +46,24 @@ export function NumpadModal({ label, initialValue, onConfirm, onClose }: Props) 
     }
   }
 
-  const fmt = (str: string) => {
+  // ── Formato según modo ──────────────────────────────────────
+  const formatDisplay = (str: string) => {
     const num = parseFloat(str)
     if (isNaN(num)) return str || '0'
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 2,
-    }).format(num)
+
+    if (mode === 'money') {
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        maximumFractionDigits: 0,
+      }).format(num)
+    }
+
+    // Modo cantidad → muestra el número + unidad
+    return `${parseFloat(num.toFixed(3))} ${unit}`
   }
+
+  const placeholder = mode === 'money' ? '$0' : `0 ${unit}`
 
   const KEYS = [
     ['7', '8', '9'],
@@ -84,7 +95,10 @@ export function NumpadModal({ label, initialValue, onConfirm, onClose }: Props) 
           <p className="text-xs font-medium text-gray-400 mb-2">{label}</p>
           <div className="flex items-end justify-between">
             <p className="text-3xl font-bold text-gray-900 tabular-nums tracking-tight">
-              {display ? fmt(display) : <span className="text-gray-300">$0</span>}
+              {display
+                ? formatDisplay(display)
+                : <span className="text-gray-300">{placeholder}</span>
+              }
             </p>
             {display && (
               <button

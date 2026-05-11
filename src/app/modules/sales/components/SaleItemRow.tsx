@@ -18,6 +18,9 @@ const fmt = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n)
 
+const fmtQty = (n: number) =>
+  parseFloat(n.toFixed(3)).toString()
+
 function getAvatarColor(name: string): string {
   const colors = [
     'bg-blue-100 text-blue-600',
@@ -37,8 +40,8 @@ type NumpadTarget = 'quantity' | 'total' | null
 export function SaleItemRow({ item, index, onUpdateQuantity, onUpdateTotal, onRemove }: Props) {
   const [numpadTarget, setNumpadTarget] = useState<NumpadTarget>(null)
 
-  const cost   = item.quantity * item.purchase_price
-  const profit = item.total - cost
+  const cost   = Math.round(item.quantity * item.purchase_price * 1000) / 1000
+  const profit = Math.round((item.total - cost) * 1000) / 1000
 
   const handleConfirm = (value: number) => {
     if (numpadTarget === 'quantity') onUpdateQuantity(index, value)
@@ -46,7 +49,7 @@ export function SaleItemRow({ item, index, onUpdateQuantity, onUpdateTotal, onRe
   }
 
   const numpadLabel = numpadTarget === 'quantity'
-    ? `Cantidad — ${item.product_name} (${item.unit})`
+    ? `Cantidad — ${item.product_name}`
     : `Total — ${item.product_name}`
 
   const numpadInitial = numpadTarget === 'quantity' ? item.quantity : item.total
@@ -73,13 +76,13 @@ export function SaleItemRow({ item, index, onUpdateQuantity, onUpdateTotal, onRe
                 <p className="text-xs text-gray-400 mt-0.5">{item.variant_name}</p>
               )}
               <p className="text-xs text-gray-400 mt-0.5">
-  {fmt(item.sale_price)} / {item.unit}
-  {item.credit_price && item.sale_price === item.credit_price && (
-    <span className="ml-1.5 px-1.5 py-0.5 bg-orange-50 text-orange-500 text-xs rounded-md font-medium">
-      crédito
-    </span>
-  )}
-</p>
+                {fmt(item.sale_price)} / {item.unit}
+                {item.credit_price && item.sale_price === item.credit_price && (
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-orange-50 text-orange-500 text-xs rounded-md font-medium">
+                    crédito
+                  </span>
+                )}
+              </p>
             </div>
             <button
               onClick={() => onRemove(index)}
@@ -89,22 +92,22 @@ export function SaleItemRow({ item, index, onUpdateQuantity, onUpdateTotal, onRe
             </button>
           </div>
 
-          {/* Botones cantidad y total — abren numpad */}
+          {/* Botones cantidad y total */}
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setNumpadTarget('quantity')}
               className="flex flex-col items-start px-3 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all active:scale-[0.97] text-left"
             >
-              <span className="text-xs text-gray-400 mb-0.5">Cantidad</span>
+              <span className="text-xs text-gray-400 mb-0.5">Cantidad ({item.unit})</span>
               <span className="text-sm font-bold text-gray-900 tabular-nums">
-                {item.quantity} {item.unit}
+                {fmtQty(item.quantity)} {item.unit}
               </span>
             </button>
             <button
               onClick={() => setNumpadTarget('total')}
               className="flex flex-col items-start px-3 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all active:scale-[0.97] text-left"
             >
-              <span className="text-xs text-gray-400 mb-0.5">Total</span>
+              <span className="text-xs text-gray-400 mb-0.5">Total ($)</span>
               <span className="text-sm font-bold text-gray-900 tabular-nums">
                 {fmt(item.total)}
               </span>
@@ -122,11 +125,13 @@ export function SaleItemRow({ item, index, onUpdateQuantity, onUpdateTotal, onRe
         </div>
       </div>
 
-      {/* Numpad modal */}
+      {/* Numpad modal — mode y unit según target */}
       {numpadTarget && (
         <NumpadModal
           label={numpadLabel}
           initialValue={numpadInitial}
+          mode={numpadTarget === 'quantity' ? 'quantity' : 'money'}
+          unit={item.unit}
           onConfirm={handleConfirm}
           onClose={() => setNumpadTarget(null)}
         />

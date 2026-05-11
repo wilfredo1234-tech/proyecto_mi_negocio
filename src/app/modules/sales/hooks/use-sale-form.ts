@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { SaleItemInput, PaymentMethod } from '../types/sale.types'
 
+const round = (n: number) => Math.round(n * 1000) / 1000
+
 export function useSaleForm() {
   const [items, setItems] = useState<SaleItemInput[]>([])
   const [customerId, setCustomerId] = useState<string | null>(null)
@@ -34,10 +36,10 @@ export function useSaleForm() {
 
     setItems(prev => [...prev, {
       ...product,
-      original_sale_price: product.sale_price,  // ← guarda el original
-      sale_price:          effectivePrice,        // ← activo según método actual
+      original_sale_price: product.sale_price,
+      sale_price:          effectivePrice,
       quantity:            1,
-      total:               effectivePrice,
+      total:               round(effectivePrice),
       input_mode:          'quantity',
     }])
   }
@@ -49,35 +51,51 @@ export function useSaleForm() {
   const updateQuantity = (index: number, quantity: number) => {
     setItems(prev => prev.map((item, i) => {
       if (i !== index) return item
-      return { ...item, quantity, total: quantity * item.sale_price, input_mode: 'quantity' }
+      const qty = round(quantity)
+      return {
+        ...item,
+        quantity: qty,
+        total:    round(qty * item.sale_price),
+        input_mode: 'quantity',
+      }
     }))
   }
 
   const updateTotal = (index: number, total: number) => {
     setItems(prev => prev.map((item, i) => {
       if (i !== index) return item
-      const quantity = item.sale_price > 0 ? total / item.sale_price : 0
-      return { ...item, total, quantity, input_mode: 'money' }
+      const quantity = item.sale_price > 0
+        ? round(total / item.sale_price)
+        : 0
+      return {
+        ...item,
+        total,
+        quantity,
+        input_mode: 'money',
+      }
     }))
   }
 
   const handleSetPaymentMethod = (method: PaymentMethod) => {
     setPaymentMethod(method)
     setItems(prev => prev.map(item => {
-      // ← ahora usa original_sale_price, nunca el sale_price mutado
       const effectivePrice = getEffectivePrice(item.original_sale_price, item.credit_price, method)
       return {
         ...item,
         sale_price: effectivePrice,
-        total:      item.quantity * effectivePrice,
+        total:      round(item.quantity * effectivePrice),
       }
     }))
   }
 
   const totals = items.reduce((acc, item) => {
-    const cost   = item.quantity * item.purchase_price
-    const profit = item.total - cost
-    return { total: acc.total + item.total, cost: acc.cost + cost, profit: acc.profit + profit }
+    const cost   = round(item.quantity * item.purchase_price)
+    const profit = round(item.total - cost)
+    return {
+      total:  round(acc.total + item.total),
+      cost:   round(acc.cost + cost),
+      profit: round(acc.profit + profit),
+    }
   }, { total: 0, cost: 0, profit: 0 })
 
   const isValid = items.length > 0 && paymentMethod !== null
