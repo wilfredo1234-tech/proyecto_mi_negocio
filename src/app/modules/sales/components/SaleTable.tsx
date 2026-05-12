@@ -14,8 +14,6 @@ import { SaleTableRow } from './SaleTableRow'
 import { Sale } from '../types/sale.types'
 import { SaleMobileCard } from './SaleMobileCard'
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -29,9 +27,7 @@ function filterByPeriod(sales: Sale[], period: FilterPeriod): Sale[] {
   const now = new Date()
   return sales.filter(sale => {
     const date = new Date(sale.created_at.replace(' ', 'T'))
-    if (period === 'today') {
-      return date.toDateString() === now.toDateString()
-    }
+    if (period === 'today') return date.toDateString() === now.toDateString()
     if (period === 'week') {
       const weekAgo = new Date(now)
       weekAgo.setDate(now.getDate() - 7)
@@ -50,14 +46,12 @@ const FILTER_LABELS: Record<FilterPeriod, string> = {
   month: 'Mes',
 }
 
-// ─── Skeleton ───────────────────────────────────────────────────────────────
-
 function SkeletonRow() {
   return (
     <TableRow className="hover:bg-transparent">
-      {[1,2,3,4,5].map(i => (
+      {[1,2,3,4,5,6].map(i => (
         <td key={i} className="px-4 py-4">
-          <div className="h-4 bg-gray-100 rounded-lg animate-pulse" style={{ width: `${[60,80,70,50,50][i-1]}%` }} />
+          <div className="h-4 bg-gray-100 rounded-lg animate-pulse" style={{ width: `${[60,80,70,50,50,30][i-1]}%` }} />
         </td>
       ))}
     </TableRow>
@@ -79,8 +73,6 @@ function SkeletonCard() {
     </div>
   )
 }
-
-// ─── Metric Card ────────────────────────────────────────────────────────────
 
 type MetricCardProps = {
   label: string
@@ -107,7 +99,7 @@ function MetricCard({ label, value, icon, accent, iconBg }: MetricCardProps) {
   )
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+const TABLE_HEADERS = ['Cliente', 'Fecha', 'Pago', 'Total', 'Ganancia', 'Factura']
 
 export function SaleTable() {
   const router = useRouter()
@@ -123,6 +115,23 @@ export function SaleTable() {
   }), [filtered])
 
   const periodLabel = FILTER_LABELS[period].toLowerCase()
+
+  const TableHeaders = (
+    <TableHeader>
+      <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-100">
+        {TABLE_HEADERS.map((h, i) => (
+          <TableHead
+            key={h}
+            className={`text-xs font-semibold text-gray-400 uppercase tracking-wide ${
+              i === 0 ? 'pl-5' : ''
+            } ${i === TABLE_HEADERS.length - 1 ? 'pr-5 text-right' : ''}`}
+          >
+            {h}
+          </TableHead>
+        ))}
+      </TableRow>
+    </TableHeader>
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,7 +178,7 @@ export function SaleTable() {
         />
       </div>
 
-      {/* Filtros pill */}
+      {/* Filtros */}
       <div className="flex items-center gap-2">
         {(['today', 'week', 'month'] as FilterPeriod[]).map(p => (
           <button
@@ -186,14 +195,10 @@ export function SaleTable() {
         ))}
       </div>
 
-      {/* ── MOBILE: Cards ── */}
+      {/* MOBILE: Cards */}
       <div className="flex flex-col gap-3 md:hidden">
         {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
+          <><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
         ) : filtered.length === 0 ? (
           <EmptyState period={periodLabel} />
         ) : (
@@ -203,19 +208,11 @@ export function SaleTable() {
         )}
       </div>
 
-      {/* ── DESKTOP: Tabla ── */}
+      {/* DESKTOP: Tabla */}
       <div className="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-100">
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide pl-5">Cliente</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Fecha</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pago</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Ganancia</TableHead>
-              </TableRow>
-            </TableHeader>
+            {TableHeaders}
             <TableBody>
               {[1,2,3,4,5].map(i => <SkeletonRow key={i} />)}
             </TableBody>
@@ -224,15 +221,7 @@ export function SaleTable() {
           <EmptyState period={periodLabel} />
         ) : (
           <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-100">
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide pl-5">Cliente</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Fecha</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pago</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Ganancia</TableHead>
-              </TableRow>
-            </TableHeader>
+            {TableHeaders}
             <TableBody>
               {filtered.map(sale => (
                 <SaleTableRow key={sale.id} sale={sale} />
@@ -246,8 +235,6 @@ export function SaleTable() {
   )
 }
 
-// ─── Empty State ─────────────────────────────────────────────────────────────
-
 function EmptyState({ period }: { period: string }) {
   return (
     <div className="p-14 text-center">
@@ -259,6 +246,3 @@ function EmptyState({ period }: { period: string }) {
     </div>
   )
 }
-
-// ─── Mobile Card ─────────────────────────────────────────────────────────────
-

@@ -1,5 +1,6 @@
 import { Sale } from '../types/sale.types'
 import { PaymentBadge } from './SaleTableRow'
+import { InvoiceDownloadButton } from '../../invoice/components/InvoiceDownloadButton'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -28,12 +29,15 @@ export function SaleMobileCard({ sale }: Props) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
 
-      {/* Top: badge + fecha */}
+      {/* Top: badge + fecha + botón factura */}
       <div className="flex items-center justify-between">
         <PaymentBadge method={sale.payment_method} />
-        <span className="text-xs text-gray-400 tabular-nums">
-          {relativeDate(sale.created_at)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 tabular-nums">
+            {relativeDate(sale.created_at)}
+          </span>
+          <InvoiceDownloadButton saleId={sale.id} />
+        </div>
       </div>
 
       {/* Cliente */}

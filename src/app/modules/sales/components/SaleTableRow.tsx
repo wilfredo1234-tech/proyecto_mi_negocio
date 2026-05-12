@@ -16,7 +16,6 @@ function relativeDate(dateStr: string): string {
     if (isNaN(date.getTime())) return '—'
     const now = new Date()
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000)
-
     if (diff < 60) return 'ahora'
     if (diff < 3600) return `hace ${Math.floor(diff / 60)}m`
     if (diff < 86400) {
@@ -145,8 +144,10 @@ export function SaleTableRow({ sale }: Props) {
       </TableCell>
 
       {/* Factura */}
-      <TableCell className="py-4 pr-4">
-        <InvoiceDownloadButton saleId={sale.id} />
+      <TableCell className="py-4 pr-5">
+        <div className="flex justify-end">
+          <InvoiceDownloadButton saleId={sale.id} />
+        </div>
       </TableCell>
 
     </TableRow>

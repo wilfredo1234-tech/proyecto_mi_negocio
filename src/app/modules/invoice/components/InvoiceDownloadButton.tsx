@@ -14,12 +14,19 @@ export function InvoiceDownloadButton({ saleId }: Props) {
         onClick={() => download(saleId)}
         disabled={loading}
         title="Descargar factura"
-        className="p-1.5 rounded-lg text-gray-300 hover:text-gray-700 hover:bg-gray-100 transition-all disabled:opacity-40"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-900 hover:bg-gray-700 text-white text-xs font-semibold transition-all active:scale-95 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {loading
-          ? <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin block" />
-          : <Download size={15} />
-        }
+        {loading ? (
+          <>
+            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>Generando...</span>
+          </>
+        ) : (
+          <>
+            <Download size={13} />
+            <span>Factura</span>
+          </>
+        )}
       </button>
 
       <div style={{
