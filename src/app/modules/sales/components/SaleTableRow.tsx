@@ -1,8 +1,7 @@
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Sale, PaymentMethod } from '../types/sale.types'
 import { Banknote, CreditCard, Smartphone } from 'lucide-react'
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
+import { InvoiceDownloadButton } from '../../invoice/components/InvoiceDownloadButton'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -45,8 +44,6 @@ function getAvatarColor(name: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
-// ─── Payment Badge ───────────────────────────────────────────────────────────
-
 const PAYMENT_CONFIG: Record<PaymentMethod, {
   label: string
   icon: React.ReactNode
@@ -86,8 +83,6 @@ export function PaymentBadge({ method }: { method: PaymentMethod }) {
     </span>
   )
 }
-
-// ─── Row ─────────────────────────────────────────────────────────────────────
 
 type Props = { sale: Sale }
 
@@ -147,6 +142,11 @@ export function SaleTableRow({ sale }: Props) {
           {sale.total_profit >= 0 ? '↑' : '↓'}
           {fmt(sale.total_profit)}
         </span>
+      </TableCell>
+
+      {/* Factura */}
+      <TableCell className="py-4 pr-4">
+        <InvoiceDownloadButton saleId={sale.id} />
       </TableCell>
 
     </TableRow>
